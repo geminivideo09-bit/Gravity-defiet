@@ -1,17 +1,14 @@
 <!DOCTYPE html>
-<html lang="de" class="scroll-smooth">
+<html lang="de" class="cursor-none">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GravityDefied | Calisthenics Hub</title>
+    <title>GravityDefied | Elite Calisthenics</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400;1,700;1,900&display=swap" rel="stylesheet">
-    
-    <!-- GSAP for Animations -->
+    <!-- GSAP & ScrollTrigger -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     
@@ -24,12 +21,15 @@
                 extend: {
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
+                        display: ['Oswald', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
                     },
                     colors: {
-                        brand: {
-                            cyan: '#22d3ee', // cyan-400
-                            dark: '#09090b', // zinc-950
-                        }
+                        cyan: { 400: '#22d3ee', 500: '#06b6d4' },
+                        void: '#030303',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     }
                 }
             }
@@ -37,296 +37,277 @@
     </script>
 
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Oswald:wght@500;700&display=swap');
+
         body {
-            background-color: #000;
-            color: white;
+            background-color: #030303;
+            color: #e2e8f0;
             overflow-x: hidden;
         }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
+
+        /* --- UI OVERLAYS --- */
+        .noise-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJub2lzZSI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuNjUiIG51bSBPY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI25vaXNlKSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==');
+            pointer-events: none; z-index: 9000; opacity: 0.4;
         }
-        ::-webkit-scrollbar-track {
-            background: #18181b; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #3f3f46; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #22d3ee; 
+        .vignette {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 50%, black 100%);
+            pointer-events: none; z-index: 8900; opacity: 0.6;
         }
 
-        .glass-panel {
-            background: rgba(24, 24, 27, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        /* --- CUSTOM CURSOR --- */
+        #cursor {
+            position: fixed; top: 0; left: 0; width: 8px; height: 8px;
+            background-color: #22d3ee; border-radius: 50%; pointer-events: none; z-index: 9999;
+            transform: translate(-50%, -50%); mix-blend-mode: difference;
+        }
+        #cursor-follower {
+            position: fixed; top: 0; left: 0; width: 40px; height: 40px;
+            border: 1px solid rgba(34, 211, 238, 0.5); border-radius: 50%; pointer-events: none; z-index: 9998;
+            transform: translate(-50%, -50%); transition: all 0.15s ease-out;
+        }
+        .cursor-active #cursor { transform: translate(-50%, -50%) scale(0.5); }
+        .cursor-active #cursor-follower { width: 60px; height: 60px; background: rgba(34, 211, 238, 0.1); border-color: #22d3ee; }
+
+        /* --- GLITCH TEXT EFFECT --- */
+        .glitch-wrapper { position: relative; display: inline-block; }
+        .glitch {
+            position: relative;
+            color: white;
+            mix-blend-mode: lighten;
+        }
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute; top: 0; width: 100%; height: 100%; background: #030303;
+        }
+        .glitch::before { left: 2px; text-shadow: -1px 0 #ff00c1; clip-path: inset(44% 0 61% 0); animation: glitch-anim-1 2s infinite linear alternate-reverse; }
+        .glitch::after { left: -2px; text-shadow: -1px 0 #00fff9; clip-path: inset(50% 0 30% 0); animation: glitch-anim-2 2s infinite linear alternate-reverse; }
+
+        @keyframes glitch-anim-1 {
+            0% { clip-path: inset(20% 0 80% 0); }
+            20% { clip-path: inset(60% 0 10% 0); }
+            40% { clip-path: inset(40% 0 50% 0); }
+            60% { clip-path: inset(80% 0 5% 0); }
+            80% { clip-path: inset(10% 0 70% 0); }
+            100% { clip-path: inset(30% 0 20% 0); }
+        }
+        @keyframes glitch-anim-2 {
+            0% { clip-path: inset(10% 0 60% 0); }
+            20% { clip-path: inset(30% 0 10% 0); }
+            40% { clip-path: inset(80% 0 5% 0); }
+            60% { clip-path: inset(10% 0 80% 0); }
+            80% { clip-path: inset(40% 0 20% 0); }
+            100% { clip-path: inset(50% 0 30% 0); }
         }
 
-        .clip-diagonal {
-            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+        /* --- INFINITE MARQUEE --- */
+        .marquee-container {
+            position: absolute; bottom: 10%; left: 0; width: 100%; overflow: hidden;
+            transform: rotate(-2deg); z-index: 0; opacity: 0.1; pointer-events: none;
         }
+        .marquee-content {
+            display: flex; gap: 4rem; animation: marquee 20s linear infinite; white-space: nowrap;
+        }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
-        /* Utility for dynamic JS rendering */
-        .fade-enter { opacity: 0; transform: translateY(20px); }
+        /* --- ENERGY ORB --- */
+        .energy-orb {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(34,211,238,0.4) 0%, rgba(34,211,238,0) 70%);
+            filter: blur(40px); z-index: 0; animation: pulse-orb 4s ease-in-out infinite;
+        }
+        @keyframes pulse-orb { 0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.2); } }
+
+        /* Page Shutter */
+        .shutter {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #22d3ee;
+            z-index: 10000; transform: scaleY(0); transform-origin: bottom;
+        }
     </style>
 </head>
 <body class="antialiased selection:bg-cyan-500 selection:text-black">
 
+    <!-- FX LAYERS -->
+    <div class="noise-overlay"></div>
+    <div class="vignette"></div>
+    <div id="cursor"></div>
+    <div id="cursor-follower"></div>
+    <div class="shutter"></div>
+    
+    <!-- BACKGROUND CANVAS -->
+    <canvas id="bg-canvas" class="fixed inset-0 z-[-1]"></canvas>
+
     <!-- NAVIGATION -->
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            <!-- Logo -->
-            <div onclick="router.navigate('home')" class="cursor-pointer group">
-                <div class="text-2xl font-black tracking-tighter italic bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
-                    GRAVITY<span class="text-white">DEFIED</span>
+    <nav class="fixed top-0 w-full z-50 px-6 py-6 mix-blend-difference text-white transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div onclick="router.navigate('home')" class="cursor-pointer interactable group">
+                <div class="text-2xl font-display font-bold tracking-tighter italic">
+                    GRAVITY<span class="text-cyan-400 group-hover:text-white transition-colors">DEFIED</span>
                 </div>
             </div>
             
-            <!-- Desktop Menu -->
-            <div class="hidden md:flex gap-8 items-center" id="desktop-menu">
-                <button onclick="router.navigate('home')" data-page="home" class="nav-link uppercase text-sm font-bold tracking-widest text-gray-400 hover:text-white transition-colors">Home</button>
-                <button onclick="router.navigate('skills')" data-page="skills" class="nav-link uppercase text-sm font-bold tracking-widest text-gray-400 hover:text-white transition-colors">Skills</button>
-                <button onclick="router.navigate('workouts')" data-page="workouts" class="nav-link uppercase text-sm font-bold tracking-widest text-gray-400 hover:text-white transition-colors">Workouts</button>
-                <button onclick="router.navigate('philosophy')" data-page="philosophy" class="nav-link uppercase text-sm font-bold tracking-widest text-gray-400 hover:text-white transition-colors">Philosophie</button>
-                <button onclick="router.navigate('skills')" class="bg-white text-black px-6 py-2 font-bold uppercase text-xs tracking-widest hover:bg-cyan-400 transition-colors ml-4">
-                    Start Training
-                </button>
+            <div class="hidden md:flex gap-10 items-center">
+                <button onclick="router.navigate('home')" data-page="home" class="nav-link interactable text-xs font-bold uppercase tracking-[0.2em] hover:text-cyan-400 transition-colors">Home</button>
+                <button onclick="router.navigate('skills')" data-page="skills" class="nav-link interactable text-xs font-bold uppercase tracking-[0.2em] hover:text-cyan-400 transition-colors">Skills</button>
+                <button onclick="router.navigate('workouts')" data-page="workouts" class="nav-link interactable text-xs font-bold uppercase tracking-[0.2em] hover:text-cyan-400 transition-colors">Workouts</button>
+                <button onclick="router.navigate('philosophy')" data-page="philosophy" class="nav-link interactable text-xs font-bold uppercase tracking-[0.2em] hover:text-cyan-400 transition-colors">Philosophie</button>
             </div>
 
-            <!-- Mobile Menu Toggle -->
-            <button class="md:hidden text-white hover:text-cyan-400 transition-colors" onclick="toggleMobileMenu()">
-                <i data-lucide="menu"></i>
-            </button>
-        </div>
-
-        <!-- Mobile Menu Dropdown -->
-        <div id="mobile-menu" class="hidden md:hidden bg-zinc-900 border-b border-white/10 overflow-hidden">
-            <div class="flex flex-col p-6 gap-4">
-                <button onclick="router.navigate('home'); toggleMobileMenu()" class="text-left text-xl font-bold uppercase text-gray-300 hover:text-cyan-400">Home</button>
-                <button onclick="router.navigate('skills'); toggleMobileMenu()" class="text-left text-xl font-bold uppercase text-gray-300 hover:text-cyan-400">Skills</button>
-                <button onclick="router.navigate('workouts'); toggleMobileMenu()" class="text-left text-xl font-bold uppercase text-gray-300 hover:text-cyan-400">Workouts</button>
-                <button onclick="router.navigate('philosophy'); toggleMobileMenu()" class="text-left text-xl font-bold uppercase text-gray-300 hover:text-cyan-400">Philosophie</button>
+            <div class="flex items-center gap-4">
+                 <button onclick="router.navigate('workouts')" class="hidden md:block interactable group px-6 py-2 border border-white/20 text-xs font-bold uppercase tracking-widest overflow-hidden relative hover:border-cyan-400 transition-all">
+                    <span class="relative z-10 group-hover:text-black transition-colors">Start Now</span>
+                    <div class="absolute inset-0 bg-cyan-400 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                </button>
+                <button class="md:hidden interactable" onclick="toggleMobileMenu()">
+                    <i data-lucide="menu"></i>
+                </button>
             </div>
         </div>
     </nav>
 
-    <!-- MAIN CONTENT AREA -->
-    <main id="app-root" class="min-h-screen pt-20">
-        <!-- Content will be injected here by JavaScript -->
+    <!-- MOBILE MENU -->
+    <div id="mobile-menu" class="fixed inset-0 bg-black z-[9000] hidden flex-col justify-center items-center gap-8 opacity-0 pointer-events-none">
+        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+        <button onclick="router.navigate('home'); toggleMobileMenu()" class="text-4xl font-display font-bold uppercase text-white hover:text-cyan-400 glitch-hover" data-text="HOME">Home</button>
+        <button onclick="router.navigate('skills'); toggleMobileMenu()" class="text-4xl font-display font-bold uppercase text-white hover:text-cyan-400 glitch-hover" data-text="SKILLS">Skills</button>
+        <button onclick="router.navigate('workouts'); toggleMobileMenu()" class="text-4xl font-display font-bold uppercase text-white hover:text-cyan-400 glitch-hover" data-text="WORKOUTS">Workouts</button>
+        <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-white interactable"><i data-lucide="x" class="w-8 h-8"></i></button>
+    </div>
+
+    <!-- MAIN APP AREA -->
+    <main id="app-root" class="min-h-screen pt-24 relative z-10">
+        <!-- Dynamic Content -->
     </main>
 
-    <!-- MODAL OVERLAY (Initially Hidden) -->
-    <div id="modal-overlay" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-xl opacity-0">
-        <!-- Modal Content Injected Here -->
-        <div id="modal-content" class="w-full max-w-6xl max-h-[90vh] bg-zinc-900 border border-white/10 rounded-xl overflow-hidden shadow-2xl flex flex-col md:flex-row relative transform scale-95 opacity-0">
-            <!-- Dynamic Content -->
+    <!-- MODAL -->
+    <div id="modal-overlay" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black/90 backdrop-blur-md opacity-0">
+        <div id="modal-content" class="w-full max-w-6xl max-h-[90vh] glass-panel flex flex-col md:flex-row relative transform translate-y-10 opacity-0 border-l-4 border-cyan-400">
+            <!-- Injected Content -->
         </div>
     </div>
 
-    <!-- FOOTER -->
-    <footer class="bg-black border-t border-white/10 py-12 relative z-10">
-        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-             <div class="text-2xl font-black tracking-tighter italic text-white">
-                GRAVITY<span class="text-cyan-400">DEFIED</span>
-            </div>
-            <div class="text-gray-500 text-sm">
-                © 2024 Gravity Defied. Built for Athletes.
-            </div>
-            <div class="flex gap-6">
-                <a href="#" class="text-gray-400 hover:text-cyan-400 transition-colors">Instagram</a>
-                <a href="#" class="text-gray-400 hover:text-cyan-400 transition-colors">YouTube</a>
-            </div>
+    <!-- VIDEO OVERLAY -->
+    <div id="video-overlay" class="fixed inset-0 z-[150] hidden items-center justify-center bg-black/95 backdrop-blur-xl p-4 opacity-0">
+        <div class="w-full max-w-5xl aspect-video bg-black border border-white/20 relative shadow-[0_0_100px_rgba(34,211,238,0.2)]">
+            <button onclick="closeVideo()" class="absolute -top-12 right-0 text-white hover:text-cyan-400 interactable flex items-center gap-2 font-mono text-sm">
+                [ TERMINATE FEED ] <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <div id="video-container" class="w-full h-full"></div>
         </div>
-    </footer>
+    </div>
 
-    <!-- JAVASCRIPT DATA & LOGIC -->
+    <!-- JAVASCRIPT LOGIC -->
     <script>
         // --- DATA ---
         const SKILL_DATA = [
-            {
-                id: 'pushup',
-                title: 'Push Up',
-                category: 'Push',
-                difficulty: 'Beginner',
-                level: 1,
-                description: 'Die Basis aller Druckübungen. Trainiert Brust, Schultern und Trizeps.',
-                image: 'https://images.unsplash.com/photo-1598971639058-211a74a96fea?auto=format&fit=crop&q=80&w=800',
-                steps: ['Hände schulterbreit', 'Körper eine gerade Linie', 'Ellbogen 45° zum Körper', 'Brust berührt fast den Boden'],
-                progression: ['Wall Push Up', 'Incline Push Up', 'Knee Push Up'],
-                unlocks: ['Diamond Push Up', 'Pseudo Planche Push Up']
-            },
-            {
-                id: 'pullup',
-                title: 'Pull Up',
-                category: 'Pull',
-                difficulty: 'Beginner',
-                level: 2,
-                description: 'Der König des Oberkörper-Zugs. Baut einen breiten Rücken und starke Arme.',
-                image: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&q=80&w=800',
-                steps: ['Hände etwas weiter als schulterbreit', 'Aktiver Hang (Scapula Retraction)', 'Kinn über die Stange ziehen', 'Kontrolliert ablassen'],
-                progression: ['Dead Hang', 'Scapula Pulls', 'Australian Pull Up', 'Band Assisted Pull Up'],
-                unlocks: ['Muscle Up', 'One Arm Pull Up']
-            },
-            {
-                id: 'muscleup',
-                title: 'Muscle Up',
-                category: 'Dynamic',
-                difficulty: 'Advanced',
-                level: 7,
-                description: 'Die ultimative Kombination aus Zug und Druck. Ein explosives Manöver.',
-                image: 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&q=80&w=800',
-                steps: ['Explosiver High Pull Up', 'Übergang (Transition) schnell durchführen', 'Dips oben auf der Stange', 'Gerade Körperhaltung'],
-                progression: ['Explosive Pull Ups', 'Straight Bar Dips', 'Jumping Muscle Up'],
-                unlocks: ['Front Lever Muscle Up', '360 Muscle Up']
-            },
-            {
-                id: 'frontlever',
-                title: 'Front Lever',
-                category: 'Static',
-                difficulty: 'Elite',
-                level: 9,
-                description: 'Statische Halteübung, bei der der Körper horizontal unter der Stange schwebt.',
-                image: 'https://images.unsplash.com/photo-1541600383005-565c949cf777?auto=format&fit=crop&q=80&w=800',
-                steps: ['Arme komplett gestreckt', 'Latissimus extrem anspannen', 'Hüfte auf Schulterhöhe', 'Core maximal angespannt'],
-                progression: ['Tuck Front Lever', 'Adv. Tuck Front Lever', 'Single Leg Front Lever', 'Straddle Front Lever'],
-                unlocks: ['Front Lever Pull Ups', 'Victorian Cross']
-            },
-            {
-                id: 'handstand',
-                title: 'Handstand',
-                category: 'Balance',
-                difficulty: 'Intermediate',
-                level: 5,
-                description: 'Die Kunst der Balance auf den Händen. Erfordert Mobilität und Schulterkraft.',
-                image: 'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?auto=format&fit=crop&q=80&w=800',
-                steps: ['Hände schulterbreit', 'Finger weit spreizen (greifen den Boden)', 'Schultern aktiv ausdrücken (Elevation)', 'Hollow Body Position'],
-                progression: ['Wall Handstand', 'Pike Hold', 'Frog Stand'],
-                unlocks: ['Handstand Push Up', 'One Arm Handstand', '90 Degree Push Up']
-            },
-            {
-                id: 'planche',
-                title: 'Planche',
-                category: 'Static',
-                difficulty: 'God Tier',
-                level: 10,
-                description: 'Der Körper schwebt parallel zum Boden, gehalten nur durch die Hände.',
-                image: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&q=80&w=800',
-                steps: ['Arme gestreckt (Ellenbogen locked)', 'Schultern weit vor die Hände lehnen', 'Scapula Protraktion (Rundrücken)', 'Beine gestreckt und zusammen'],
-                progression: ['Planche Lean', 'Tuck Planche', 'Adv. Tuck Planche', 'Straddle Planche'],
-                unlocks: ['Maltese', 'Planche Push Ups']
-            }
+            { id: 'pushup', title: 'Push Up', category: 'Push', difficulty: 'Beginner', level: 1, videoId: 'IODxDxX7oi4', description: 'Basis Druckübung. Baut Brust, Schulter, Trizeps.', image: 'https://images.unsplash.com/photo-1598971639058-211a74a96fea?auto=format&fit=crop&q=80&w=800', steps: ['Hände schulterbreit', 'Körper gerade', '45° Ellbogen'], mistakes: ['Hohlkreuz', 'Halbe Reps'], progression: ['Wall Push Up', 'Knee Push Up'], unlocks: ['Diamond Push Up'] },
+            { id: 'pullup', title: 'Pull Up', category: 'Pull', difficulty: 'Beginner', level: 2, videoId: 'eGo4IYlbE5g', description: 'König des Oberkörpers. Baut breiten Rücken.', image: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&q=80&w=800', steps: ['Dead Hang', 'Scapula Pull', 'Kinn drüber'], mistakes: ['Kippen', 'Schultern oben'], progression: ['Australian Pull Up'], unlocks: ['Muscle Up'] },
+            { id: 'muscleup', title: 'Muscle Up', category: 'Dynamic', difficulty: 'Advanced', level: 7, videoId: 'N4z79GjB8M4', description: 'Explosiver Zug in den Stütz.', image: 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&q=80&w=800', steps: ['High Pull', 'Transition', 'Dip'], mistakes: ['Chicken Wing'], progression: ['Explosive Pull Ups'], unlocks: ['360 Muscle Up'] },
+            { id: 'frontlever', title: 'Front Lever', category: 'Static', difficulty: 'Elite', level: 9, videoId: 's_W9T41a5sE', description: 'Horizontaler Hang gegen Schwerkraft.', image: 'https://images.unsplash.com/photo-1541600383005-565c949cf777?auto=format&fit=crop&q=80&w=800', steps: ['Arme GESTRECKT', 'Lat fest', 'Core fest'], mistakes: ['Hüfte tief'], progression: ['Tuck Lever', 'Adv. Tuck'], unlocks: ['Victorian'] },
+            { id: 'planche', title: 'Planche', category: 'Static', difficulty: 'God Tier', level: 10, videoId: 'h87P0iQ5hZ8', description: 'Schweben auf den Händen.', image: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&q=80&w=800', steps: ['Lean', 'Protraktion', 'Beine strecken'], mistakes: ['Gebeugte Arme'], progression: ['Planche Lean'], unlocks: ['Maltese'] },
+            { id: 'handstand', title: 'Handstand', category: 'Balance', difficulty: 'Intermediate', level: 5, videoId: 'Da5Dq8k7Zt4', description: 'Balance kopfüber.', image: 'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?auto=format&fit=crop&q=80&w=800', steps: ['Hollow Body', 'Finger greifen'], mistakes: ['Hohlkreuz'], progression: ['Pike Hold'], unlocks: ['HSPU'] },
         ];
 
-        // --- COMPONENTS & TEMPLATES ---
-
+        // --- COMPONENTS ---
         const Components = {
-            // Helper to determine difficulty color
-            getDifficultyColor: (diff) => {
-                if (diff === 'Beginner') return 'bg-green-500/20 text-green-400';
-                if (diff === 'Intermediate') return 'bg-yellow-500/20 text-yellow-400';
-                if (diff === 'Advanced') return 'bg-red-500/20 text-red-400';
-                return 'bg-purple-500/20 text-purple-400';
-            },
-
-            SkillCard: (skill) => `
-                <div onclick="openModal('${skill.id}')" class="group cursor-pointer relative bg-zinc-900 border border-white/5 overflow-hidden h-96 flex flex-col justify-end transition-transform duration-300 hover:-translate-y-2 card-hover-trigger">
-                    <div class="absolute inset-0">
-                        <img src="${skill.image}" alt="${skill.title}" class="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity duration-500 grayscale group-hover:grayscale-0">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-                    </div>
-                    <div class="relative p-6 z-10">
-                        <div class="flex justify-between items-end mb-2">
-                             <span class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded ${Components.getDifficultyColor(skill.difficulty)}">
-                                ${skill.difficulty}
-                            </span>
-                            <div class="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center bg-black/50 backdrop-blur-sm group-hover:bg-cyan-500 group-hover:border-cyan-500 transition-colors">
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-white"></i>
-                            </div>
-                        </div>
-                        <h3 class="text-3xl font-black text-white uppercase italic tracking-tighter mb-1">${skill.title}</h3>
-                        <p class="text-gray-400 text-sm line-clamp-2 mb-4">${skill.description}</p>
-                        <div class="w-full bg-white/10 h-1 rounded-full overflow-hidden">
-                            <div class="h-full bg-cyan-400" style="width: ${skill.level * 10}%"></div>
-                        </div>
-                    </div>
-                </div>
-            `,
-
             Hero: () => `
-                <section class="relative min-h-screen flex items-center justify-center overflow-hidden -mt-20 pt-20">
-                    <div class="absolute inset-0 bg-black">
-                         <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black opacity-50 animate-pulse"></div>
-                         <div class="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                <section class="relative min-h-[90vh] flex items-center justify-center overflow-hidden w-full">
+                    
+                    <!-- Energy Orb Background -->
+                    <div class="energy-orb"></div>
+                    
+                    <!-- Infinite Marquee Background -->
+                    <div class="marquee-container">
+                        <div class="marquee-content font-display text-[10rem] font-black text-white/5 uppercase italic">
+                            DEFY GRAVITY // BREAK LIMITS // PURE STRENGTH // NO EXCUSES // DEFY GRAVITY // BREAK LIMITS // PURE STRENGTH // NO EXCUSES
+                        </div>
                     </div>
 
-                    <div class="container mx-auto px-6 relative z-10 grid md:grid-cols-2 gap-12 items-center">
-                        <div class="hero-text opacity-0 transform -translate-x-10">
-                            <div class="flex items-center gap-2 mb-4">
-                                <span class="px-3 py-1 bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 text-xs font-bold uppercase tracking-wider rounded-full">
-                                    Ultimate Calisthenics Hub
-                                </span>
+                    <div class="container mx-auto px-6 relative z-10 grid md:grid-cols-2 gap-16 items-center">
+                        <!-- Left Content -->
+                        <div class="hero-content">
+                            <div class="flex items-center gap-2 mb-6">
+                                <span class="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                                <span class="font-mono text-cyan-400 text-xs tracking-[0.3em] scramble-text">SYSTEM_ONLINE</span>
                             </div>
-                            <h1 class="text-6xl md:text-8xl font-black text-white leading-[0.9] mb-6 tracking-tighter">
-                                DEINE <br />
-                                <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">GRAVITATION</span> <br />
-                                DEINE REGELN.
+                            
+                            <!-- GLITCH TITLE -->
+                            <h1 class="text-7xl md:text-9xl font-display font-black text-white leading-[0.85] mb-8 tracking-tighter">
+                                <div class="overflow-hidden">
+                                    <span class="block glitch-wrapper">
+                                        <span class="glitch" data-text="DEFY">DEFY</span>
+                                    </span>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <span class="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-white to-cyan-400 bg-[length:200%_auto] animate-gradient">
+                                        GRAVITY
+                                    </span>
+                                </div>
                             </h1>
-                            <p class="text-gray-400 text-lg md:text-xl max-w-lg mb-8 leading-relaxed">
-                                Meistere deinen Körper. Von den Grundlagen bis zu God-Tier Skills. 
-                                Lerne die Technik, verstehe die Progression und breche deine Limits.
+
+                            <p class="text-gray-400 text-lg md:text-xl max-w-lg mb-10 leading-relaxed font-light border-l-2 border-cyan-500/50 pl-6 reveal-up">
+                                Dein Körper ist die einzige Maschine, die du brauchst.
+                                <br><span class="text-cyan-400 font-mono text-sm">> Initialize Protocol_V4</span>
                             </p>
-                            <div class="flex gap-4">
-                                <button onclick="router.navigate('skills')" class="group relative px-8 py-4 bg-white text-black font-black uppercase tracking-widest hover:bg-cyan-400 transition-colors">
-                                    Skills lernen
-                                    <div class="absolute inset-0 border border-white translate-x-1 translate-y-1 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform pointer-events-none mix-blend-difference"></div>
-                                </button>
-                                <button onclick="router.navigate('philosophy')" class="px-8 py-4 border border-white/20 text-white font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">
-                                    Philosophie
+
+                            <div class="flex gap-6 reveal-up">
+                                <button onclick="router.navigate('skills')" class="interactable group relative px-10 py-5 bg-white text-black font-black uppercase tracking-widest overflow-hidden hover:scale-105 transition-transform skew-x-[-10deg]">
+                                    <span class="relative z-10 skew-x-[10deg] block">Skills Archiv</span>
+                                    <div class="absolute inset-0 bg-cyan-400 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out"></div>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="hero-image relative hidden md:block opacity-0 scale-90">
-                            <div class="relative w-full aspect-square max-w-md mx-auto">
-                                <div class="absolute inset-0 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-full blur-[100px] opacity-20 animate-pulse"></div>
+                        <!-- Right Visual (3D Tilt) -->
+                        <div class="hidden md:block relative perspective-container" id="hero-visual">
+                            <div class="relative w-full aspect-[4/5] max-w-md mx-auto card-3d interactable">
+                                <div class="absolute inset-0 bg-gradient-to-tr from-cyan-500 to-purple-600 rounded-lg blur-2xl opacity-40 animate-pulse-slow"></div>
                                 <img src="https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&q=80&w=800" 
-                                    class="relative z-10 w-full h-full object-cover rounded-2xl grayscale contrast-125 border border-white/10 shadow-2xl clip-diagonal"
-                                    alt="Hero Image">
+                                    class="relative z-10 w-full h-full object-cover grayscale contrast-125 border border-white/20 shadow-2xl"
+                                    style="clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);"
+                                    alt="Hero">
                                 
                                 <!-- Floating Stats -->
-                                <div class="absolute -bottom-10 -left-10 bg-zinc-900 p-4 border border-white/10 rounded-lg shadow-xl z-20 float-anim-1">
-                                    <div class="flex items-center gap-3">
-                                        <i data-lucide="activity" class="text-cyan-400"></i>
-                                        <div>
-                                            <p class="text-xs text-gray-400 uppercase">Current Skill</p>
-                                            <p class="text-white font-bold">Full Planche</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                 <div class="absolute -top-5 -right-5 bg-zinc-900 p-4 border border-white/10 rounded-lg shadow-xl z-20 float-anim-2">
-                                    <div class="flex items-center gap-3">
-                                        <i data-lucide="flame" class="text-orange-500"></i>
-                                        <div>
-                                            <p class="text-xs text-gray-400 uppercase">Status</p>
-                                            <p class="text-white font-bold">God Mode</p>
-                                        </div>
-                                    </div>
+                                <div class="absolute bottom-10 -left-12 bg-black/80 backdrop-blur border-l-4 border-cyan-400 p-6 w-56 z-30 float-anim">
+                                    <div class="text-xs font-mono text-gray-400 mb-1">CURRENT STATUS</div>
+                                    <div class="text-2xl font-display font-bold text-white mb-2">GOD MODE</div>
+                                    <div class="h-1 w-full bg-gray-800"><div class="h-full bg-cyan-400 w-[98%] shadow-[0_0_10px_#22d3ee]"></div></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
                 
-                <div class="py-20 bg-zinc-950">
+                <div class="py-32 relative z-10 bg-gradient-to-b from-transparent to-black">
                     <div class="container mx-auto px-6">
-                        <div class="flex justify-between items-end mb-12">
-                            <h3 class="text-3xl font-black text-white uppercase italic">Featured Skills</h3>
-                            <button onclick="router.navigate('skills')" class="text-cyan-400 font-bold uppercase text-sm hover:text-white transition-colors flex items-center gap-2">View All <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                        <div class="flex justify-between items-end mb-16 border-b border-white/10 pb-4">
+                            <h3 class="text-4xl font-display font-bold text-white uppercase italic tracking-tight">Featured <span class="text-cyan-500">Skills</span></h3>
+                            <button onclick="router.navigate('skills')" class="interactable text-gray-400 hover:text-cyan-400 transition-colors text-xs font-mono tracking-widest flex items-center gap-2">FULL ARCHIVE <i data-lucide="arrow-right"></i></button>
                         </div>
-                        <div class="grid md:grid-cols-3 gap-6 stagger-grid">
+                        <div class="grid md:grid-cols-3 gap-8 stagger-grid">
                             ${SKILL_DATA.slice(0, 3).map(skill => Components.SkillCard(skill)).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+
+            SkillCard: (skill) => `
+                <div onclick="openModal('${skill.id}')" class="interactable group cursor-pointer relative bg-zinc-900 h-[500px] flex flex-col justify-end overflow-hidden border border-white/5 hover:border-cyan-400/50 transition-colors duration-500">
+                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-90" style="background-image: url('${skill.image}')"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                    
+                    <div class="relative p-8 z-10 transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500 cubic-bezier(0.23, 1, 0.32, 1)">
+                        <div class="flex items-center gap-3 mb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                             <span class="px-2 py-1 bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 text-[10px] font-bold uppercase tracking-widest">${skill.difficulty}</span>
+                        </div>
+                        <h3 class="text-5xl font-display font-black text-white uppercase italic tracking-tighter mb-2 group-hover:text-cyan-400 transition-colors text-shadow-glow">${skill.title}</h3>
+                        <p class="text-gray-400 text-sm line-clamp-2 font-light border-l border-cyan-500 pl-4 mb-4 opacity-0 group-hover:opacity-100 transition-opacity delay-100">${skill.description}</p>
+                        
+                        <div class="flex items-center text-xs font-mono text-cyan-400 gap-2 opacity-0 group-hover:opacity-100 transition-opacity delay-200">
+                            <span>ACCESS DATA</span> <i data-lucide="chevron-right" class="w-4 h-4"></i>
                         </div>
                     </div>
                 </div>
@@ -335,333 +316,354 @@
             SkillsPage: (filter = 'All') => {
                 const categories = ['All', 'Push', 'Pull', 'Static', 'Dynamic', 'Balance'];
                 const filtered = filter === 'All' ? SKILL_DATA : SKILL_DATA.filter(s => s.category === filter);
-                
                 return `
-                <section class="container mx-auto px-6 pt-10 pb-20">
-                    <div class="mb-12 page-header opacity-0 translate-y-4">
-                        <h2 class="text-5xl md:text-7xl font-black text-white mb-6 uppercase tracking-tighter">
-                            Skill <span class="text-cyan-400">Archiv</span>
-                        </h2>
-                        <div class="flex flex-wrap gap-4 mb-8">
-                            ${categories.map(cat => `
-                                <button 
-                                    onclick="updateSkillFilter('${cat}')"
-                                    class="px-6 py-2 rounded-full border text-sm font-bold uppercase tracking-wider transition-all ${
-                                        filter === cat 
-                                        ? 'bg-white text-black border-white' 
-                                        : 'bg-transparent text-gray-400 border-white/20 hover:border-cyan-400 hover:text-cyan-400'
-                                    }"
-                                >
-                                    ${cat}
-                                </button>
-                            `).join('')}
+                <section class="container mx-auto px-6 pt-10 pb-20 min-h-screen">
+                    <div class="text-center mb-20 relative">
+                        <h2 class="text-[15vw] md:text-[12rem] font-display font-black text-white/5 uppercase tracking-tighter leading-none absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">ARCHIVE</h2>
+                        <div class="relative z-10">
+                            <h3 class="text-4xl md:text-6xl font-display font-bold text-white mb-8 glitch" data-text="SKILL DATABASE">SKILL DATABASE</h3>
+                            <div class="flex flex-wrap justify-center gap-4">
+                                ${categories.map(cat => `
+                                    <button onclick="updateSkillFilter('${cat}')" class="interactable px-8 py-3 text-xs font-bold uppercase tracking-widest border transition-all ${filter === cat ? 'bg-cyan-500 text-black border-cyan-500' : 'bg-black/50 text-gray-400 border-white/20 hover:border-cyan-400 hover:text-cyan-400'}">${cat}</button>
+                                `).join('')}
+                            </div>
                         </div>
                     </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 grid-container">
+                    <div id="skills-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
                         ${filtered.map(skill => Components.SkillCard(skill)).join('')}
                     </div>
-                </section>
-                `;
+                </section>`;
             },
 
             WorkoutsPage: () => `
-                 <section class="container mx-auto px-6 pt-10 pb-20">
-                    <div class="text-center max-w-3xl mx-auto mb-12 page-header opacity-0 translate-y-4">
-                        <h2 class="text-4xl md:text-6xl font-black text-white mb-6 uppercase tracking-tighter">
-                            Routine <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600">Generator</span>
-                        </h2>
-                        <p class="text-gray-400 text-lg">Wähle dein Level. Wir bauen deinen Plan.</p>
+                <section class="container mx-auto px-6 min-h-[80vh] flex flex-col justify-center items-center">
+                    <h2 class="text-6xl md:text-8xl font-display font-black text-white mb-16 uppercase tracking-tighter text-center glitch" data-text="GENERATE PROTOCOL">
+                        GENERATE PROTOCOL
+                    </h2>
+                    <div class="grid md:grid-cols-3 gap-6 w-full max-w-6xl stagger-grid">
+                        ${['Fundamentals', 'Hypertrophy', 'Statics'].map(type => `
+                            <div class="interactable group relative bg-zinc-900/50 border border-white/10 p-12 hover:border-cyan-400 transition-colors cursor-pointer overflow-hidden" onclick="alert('Generiere ${type} Plan...')">
+                                <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                <h3 class="text-4xl font-display font-bold text-white uppercase mb-4 relative z-10">${type}</h3>
+                                <p class="text-gray-500 text-sm mb-8 relative z-10">Optimierter Algorithmus für maximalen Load.</p>
+                                <div class="flex justify-between items-center text-cyan-400 text-xs font-mono tracking-widest relative z-10">
+                                    <span>[ EXECUTE ]</span>
+                                    <i data-lucide="cpu" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
-
-                    <div class="grid md:grid-cols-3 gap-8 stagger-grid">
-                        <!-- Card 1 -->
-                        <div class="bg-zinc-900/50 border border-green-500/50 p-8 rounded-2xl flex flex-col items-center text-center group cursor-pointer hover:bg-zinc-900 transition-colors">
-                            <i data-lucide="dumbbell" class="w-12 h-12 text-green-400 mb-6"></i>
-                            <h3 class="text-2xl font-black text-white uppercase mb-4">Fundamentals</h3>
-                            <p class="text-gray-400 mb-8">Ganzkörper Kraft & Kondition für Einsteiger.</p>
-                            <button class="mt-auto px-6 py-3 bg-white/5 hover:bg-white/20 text-white font-bold uppercase tracking-widest rounded transition-colors w-full">Generieren</button>
-                        </div>
-                        <!-- Card 2 -->
-                        <div class="bg-zinc-900/50 border border-cyan-500/50 p-8 rounded-2xl flex flex-col items-center text-center group cursor-pointer hover:bg-zinc-900 transition-colors">
-                            <i data-lucide="target" class="w-12 h-12 text-cyan-400 mb-6"></i>
-                            <h3 class="text-2xl font-black text-white uppercase mb-4">Hypertrophy</h3>
-                            <p class="text-gray-400 mb-8">Muskelaufbau mit Bodyweight-Übungen.</p>
-                            <button class="mt-auto px-6 py-3 bg-white/5 hover:bg-white/20 text-white font-bold uppercase tracking-widest rounded transition-colors w-full">Generieren</button>
-                        </div>
-                        <!-- Card 3 -->
-                        <div class="bg-zinc-900/50 border border-purple-500/50 p-8 rounded-2xl flex flex-col items-center text-center group cursor-pointer hover:bg-zinc-900 transition-colors">
-                            <i data-lucide="flame" class="w-12 h-12 text-purple-400 mb-6"></i>
-                            <h3 class="text-2xl font-black text-white uppercase mb-4">Statics</h3>
-                            <p class="text-gray-400 mb-8">Spezifisches Training für Front Lever & Planche.</p>
-                            <button class="mt-auto px-6 py-3 bg-white/5 hover:bg-white/20 text-white font-bold uppercase tracking-widest rounded transition-colors w-full">Generieren</button>
-                        </div>
-                    </div>
-                 </section>
+                </section>
             `,
 
             PhilosophyPage: () => `
-                <section class="container mx-auto px-6 min-h-[80vh] flex flex-col justify-center">
-                    <div class="grid md:grid-cols-2 gap-16 items-center">
-                        <div class="page-header opacity-0 -translate-x-10">
-                            <h2 class="text-4xl md:text-6xl font-black text-white mb-8 uppercase tracking-tighter leading-tight">
-                                Die Kunst der <br/>
-                                <span class="text-cyan-400">Selbstbeherrschung</span>
-                            </h2>
-                            <div class="space-y-6 text-gray-300 text-lg leading-relaxed">
-                                <p>Calisthenics ist mehr als nur Training. Es ist der Beweis, dass du keine Maschinen brauchst, um stark zu werden. Dein Körper ist das einzige Werkzeug, das du jemals brauchen wirst.</p>
-                                <blockquote class="border-l-4 border-cyan-400 pl-6 py-2 italic text-white text-xl">
-                                    "The body achieves what the mind believes."
-                                </blockquote>
-                            </div>
-                        </div>
-                        <div class="relative scale-90 opacity-0 fade-in-section">
-                            <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-purple-600/20 rounded-2xl rotate-3"></div>
-                            <div class="bg-zinc-900 border border-white/10 p-8 rounded-2xl relative rotate-[-3deg] hover:rotate-0 transition-transform duration-500">
-                                <h3 class="text-2xl font-bold text-white mb-6 uppercase">Core Values</h3>
-                                <ul class="space-y-4">
-                                    <li class="flex items-center gap-4">
-                                        <i data-lucide="activity" class="text-cyan-400"></i>
-                                        <span class="text-white font-medium">Konsistenz über Intensität</span>
-                                    </li>
-                                    <li class="flex items-center gap-4">
-                                        <i data-lucide="target" class="text-cyan-400"></i>
-                                        <span class="text-white font-medium">Form vor Wiederholungen</span>
-                                    </li>
-                                    <li class="flex items-center gap-4">
-                                        <i data-lucide="layers" class="text-cyan-400"></i>
-                                        <span class="text-white font-medium">Geduld in der Progression</span>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+                <section class="container mx-auto px-6 min-h-screen flex items-center justify-center relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-cyan-900/20 via-black to-black"></div>
+                    <div class="max-w-5xl text-center relative z-10">
+                        <div class="mb-8 flex justify-center"><i data-lucide="brain-circuit" class="w-16 h-16 text-cyan-400 animate-pulse"></i></div>
+                        <h2 class="text-5xl md:text-8xl font-display font-black text-white mb-10 uppercase tracking-tighter leading-tight reveal-up">
+                            MIND <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-600">OVER</span> MATTER
+                        </h2>
+                        <p class="text-xl md:text-2xl text-gray-300 leading-relaxed font-light reveal-up delay-100 max-w-3xl mx-auto">
+                            Die Schwerkraft ist eine Konstante. Dein Wille ist die Variable.
+                            <br>Wir trainieren nicht für Ästhetik. Wir trainieren für Fähigkeit.
+                        </p>
                     </div>
                 </section>
             `
         };
 
-        // --- APP LOGIC ---
-
+        // --- LOGIC ---
         const router = {
             currentPage: 'home',
-            
             navigate: async (page) => {
-                if (page === router.currentPage) return;
+                if(page === router.currentPage) return;
                 
-                // 1. Update Navigation State
-                document.querySelectorAll('.nav-link').forEach(btn => {
-                    if(btn.dataset.page === page) {
-                        btn.classList.add('text-cyan-400');
-                        btn.classList.remove('text-gray-400');
-                    } else {
-                        btn.classList.remove('text-cyan-400');
-                        btn.classList.add('text-gray-400');
-                    }
-                });
+                // Shutter Animation
+                const shutter = document.querySelector('.shutter');
+                const tl = gsap.timeline();
 
-                // 2. Animate Out
-                const main = document.getElementById('app-root');
-                await gsap.to(main, { opacity: 0, y: -20, duration: 0.3 });
-
-                // 3. Render New Content
-                router.currentPage = page;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                tl.to(shutter, { scaleY: 1, duration: 0.5, ease: "expo.inOut" })
+                  .add(() => {
+                      const main = document.getElementById('app-root');
+                      router.currentPage = page;
+                      window.scrollTo(0,0);
+                      
+                      if(page === 'home') main.innerHTML = Components.Hero();
+                      else if(page === 'skills') main.innerHTML = Components.SkillsPage();
+                      else if(page === 'workouts') main.innerHTML = Components.WorkoutsPage();
+                      else if(page === 'philosophy') main.innerHTML = Components.PhilosophyPage();
+                      
+                      lucide.createIcons();
+                      initInteractions();
+                      scrambleTextElements(); // Trigger text scramble effect
+                  })
+                  .to(shutter, { scaleY: 0, transformOrigin: "top", duration: 0.6, ease: "expo.inOut" })
+                  .add(() => runEntrance(page));
                 
-                if (page === 'home') main.innerHTML = Components.Hero();
-                else if (page === 'skills') main.innerHTML = Components.SkillsPage();
-                else if (page === 'workouts') main.innerHTML = Components.WorkoutsPage();
-                else if (page === 'philosophy') main.innerHTML = Components.PhilosophyPage();
-
-                // 4. Re-initialize Icons
-                lucide.createIcons();
-
-                // 5. Animate In & Page Specific Animations
-                await gsap.to(main, { opacity: 1, y: 0, duration: 0.4, clearProps: "all" });
-                runPageAnimations(page);
+                updateNav(page);
             }
         };
 
-        // --- FILTER LOGIC ---
-        function updateSkillFilter(category) {
-            const main = document.getElementById('app-root');
-            // We re-render just the grid part ideally, but full page re-render is easier for this SPA structure
-            // To make it smooth, we manually crossfade the grid
-            const grid = document.querySelector('.grid-container');
+        function updateNav(page) {
+            document.querySelectorAll('.nav-link').forEach(btn => {
+                btn.classList.toggle('text-cyan-400', btn.dataset.page === page);
+            });
+        }
+
+        // --- EFFECTS ENGINE ---
+
+        // 1. SCRAMBLE TEXT EFFECT
+        function scrambleTextElements() {
+            const elements = document.querySelectorAll('.scramble-text');
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
             
-            gsap.to(grid, { opacity: 0, duration: 0.2, onComplete: () => {
-                main.innerHTML = Components.SkillsPage(category);
-                lucide.createIcons();
+            elements.forEach(el => {
+                const originalText = el.innerText;
+                let iterations = 0;
+                const interval = setInterval(() => {
+                    el.innerText = originalText.split('').map((letter, index) => {
+                        if(index < iterations) return originalText[index];
+                        return chars[Math.floor(Math.random() * chars.length)];
+                    }).join('');
+                    
+                    if(iterations >= originalText.length) clearInterval(interval);
+                    iterations += 1/3;
+                }, 30);
+            });
+        }
+
+        // 2. ENTRANCE ANIMATIONS
+        function runEntrance(page) {
+            ScrollTrigger.refresh();
+            
+            gsap.from(".reveal-up", { y: 50, opacity: 0, duration: 1, stagger: 0.1, ease: "power3.out" });
+            
+            const grids = document.querySelectorAll('.stagger-grid > div, #skills-grid > div');
+            if(grids.length) {
+                gsap.fromTo(grids, 
+                    { opacity: 0, y: 50 },
+                    { opacity: 1, y: 0, duration: 0.8, stagger: 0.1, ease: "power2.out", scrollTrigger: { trigger: grids[0].parentElement, start: "top 85%" } }
+                );
+            }
+            
+            if(page === 'home') {
+                gsap.from(".card-3d", { x: 100, opacity: 0, duration: 1.5, ease: "power3.out", delay: 0.2 });
+            }
+        }
+
+        // 3. INTERACTION HANDLER
+        function initInteractions() {
+            // Magnetic Buttons
+            document.querySelectorAll('.interactable').forEach(el => {
+                el.addEventListener('mouseenter', () => document.body.classList.add('cursor-active'));
+                el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-active'));
                 
-                // Re-select the correct filter button visually
-                // (Already handled by re-rendering with new state)
+                el.addEventListener('mousemove', (e) => {
+                    const rect = el.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    gsap.to(el, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
+                });
+                el.addEventListener('mouseleave', () => {
+                    gsap.to(el, { x: 0, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" });
+                });
+            });
+
+            // 3D Tilt for Hero Image
+            const card = document.querySelector('.card-3d');
+            if(card) {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = ((y - centerY) / centerY) * -10;
+                    const rotateY = ((x - centerX) / centerX) * 10;
+                    
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = `perspective(1000px) rotateX(0) rotateY(0)`;
+                });
+            }
+        }
+
+        // 4. NEURAL NETWORK BACKGROUND (INTERACTIVE)
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+        let mouse = { x: null, y: null };
+
+        function initBg() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            particles = [];
+            const particleCount = Math.floor((width * height) / 15000);
+            
+            for(let i=0; i<particleCount; i++) {
+                particles.push({
+                    x: Math.random() * width, y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5,
+                    size: Math.random() * 2,
+                    baseX: Math.random() * width, baseY: Math.random() * height
+                });
+            }
+        }
+
+        function drawBg() {
+            ctx.clearRect(0,0,width,height);
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = '#22d3ee';
+            
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy;
                 
-                gsap.fromTo('.grid-container', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4 });
+                // Wall bounce
+                if(p.x < 0 || p.x > width) p.vx *= -1;
+                if(p.y < 0 || p.y > height) p.vy *= -1;
+
+                // Mouse Interaction (Flee/Connect)
+                if(mouse.x != null) {
+                    let dx = mouse.x - p.x;
+                    let dy = mouse.y - p.y;
+                    let distance = Math.sqrt(dx*dx + dy*dy);
+                    if(distance < 150) {
+                        ctx.beginPath();
+                        ctx.lineWidth = 0.2;
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.stroke();
+                        
+                        // Mild repulsion
+                        if(distance < 100) {
+                           const forceDirectionX = dx / distance;
+                           const forceDirectionY = dy / distance;
+                           const force = (100 - distance) / 100;
+                           p.vx -= forceDirectionX * force * 0.05;
+                           p.vy -= forceDirectionY * force * 0.05;
+                        }
+                    }
+                }
+
+                ctx.globalAlpha = 0.3;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+            });
+            requestAnimationFrame(drawBg);
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX; mouse.y = e.clientY;
+            // Update custom cursor
+            gsap.to('#cursor', { x: e.clientX, y: e.clientY, duration: 0.1 });
+            gsap.to('#cursor-follower', { x: e.clientX, y: e.clientY, duration: 0.3 });
+        });
+        window.addEventListener('resize', initBg);
+
+        // --- MODAL & HELPERS ---
+        function updateSkillFilter(category) {
+            const grid = document.getElementById('skills-grid');
+            gsap.to(grid, { opacity: 0, y: 20, duration: 0.3, onComplete: () => {
+                document.getElementById('app-root').innerHTML = Components.SkillsPage(category);
+                lucide.createIcons(); initInteractions();
+                gsap.fromTo("#skills-grid > div", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.05 });
             }});
         }
 
-        // --- MODAL LOGIC ---
-        function openModal(skillId) {
-            const skill = SKILL_DATA.find(s => s.id === skillId);
+        function openModal(id) {
+            const skill = SKILL_DATA.find(s => s.id === id);
             if(!skill) return;
-
-            const modalOverlay = document.getElementById('modal-overlay');
-            const modalContent = document.getElementById('modal-content');
-            
-            // Build Modal HTML
-            modalContent.innerHTML = `
-                <button onclick="closeModal()" class="absolute top-4 right-4 z-20 p-2 bg-black/50 hover:bg-white text-white hover:text-black rounded-full transition-colors">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-
-                <!-- Left Image -->
-                <div class="w-full md:w-5/12 relative h-64 md:h-auto">
-                    <img src="${skill.image}" class="w-full h-full object-cover grayscale opacity-80" alt="${skill.title}">
-                    <div class="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent md:bg-gradient-to-r"></div>
+            const content = document.getElementById('modal-content');
+            content.innerHTML = `
+                <button onclick="closeModal()" class="absolute top-4 right-4 z-50 p-2 text-white hover:text-cyan-400 interactable"><i data-lucide="x" class="w-8 h-8"></i></button>
+                <div class="w-full md:w-5/12 bg-black relative min-h-[300px]">
+                    <img src="${skill.image}" class="w-full h-full object-cover opacity-60">
                     <div class="absolute bottom-6 left-6">
-                        <h2 class="text-5xl font-black text-white uppercase italic tracking-tighter mb-2">${skill.title}</h2>
-                        <span class="text-cyan-400 font-bold uppercase tracking-widest">${skill.category}</span>
+                        <h2 class="text-6xl font-display font-black text-white uppercase italic leading-none glitch" data-text="${skill.title}">${skill.title}</h2>
+                        <span class="text-cyan-400 font-bold uppercase tracking-widest text-xs border border-cyan-400 px-2 py-1">${skill.category}</span>
                     </div>
                 </div>
-
-                <!-- Right Content -->
-                <div class="w-full md:w-7/12 p-8 overflow-y-auto">
-                    <!-- Progression -->
-                    <div class="mb-8">
-                        <h4 class="flex items-center gap-2 text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">
-                            <i data-lucide="layers" class="w-4 h-4"></i> Skill Tree Path
-                        </h4>
-                        <div class="flex flex-wrap gap-2 items-center">
-                            ${skill.progression.map(step => `
-                                <span class="px-3 py-1 bg-white/5 border border-white/10 text-gray-400 text-xs rounded">${step}</span>
-                                <i data-lucide="chevron-right" class="w-3 h-3 text-gray-600"></i>
-                            `).join('')}
-                            <span class="px-3 py-1 bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 text-xs font-bold rounded shadow-[0_0_15px_rgba(34,211,238,0.2)]">${skill.title}</span>
-                            ${skill.unlocks.length > 0 ? `
-                                <i data-lucide="chevron-right" class="w-3 h-3 text-gray-600"></i>
-                                <span class="px-3 py-1 border border-dashed border-gray-600 text-gray-500 text-xs rounded opacity-50">???</span>
-                            ` : ''}
-                        </div>
+                <div class="w-full md:w-7/12 p-10 overflow-y-auto bg-zinc-950/90 text-white">
+                     <button onclick="openVideo('${skill.videoId}')" class="w-full mb-8 py-4 bg-cyan-600 hover:bg-white hover:text-black font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 group interactable">
+                        <i data-lucide="play-circle" class="group-hover:text-black"></i> Play Tutorial
+                    </button>
+                    <div class="grid grid-cols-2 gap-8 mb-6">
+                        <div><h3 class="text-gray-500 font-bold text-xs uppercase mb-2">Execution</h3><ul class="text-sm space-y-2 text-gray-300">${skill.steps.map((s,i) => `<li><span class="text-cyan-500 font-bold">0${i+1}</span> ${s}</li>`).join('')}</ul></div>
+                        <div><h3 class="text-gray-500 font-bold text-xs uppercase mb-2">Mistakes</h3><ul class="text-sm space-y-2 text-red-300">${skill.mistakes.map(m => `<li>• ${m}</li>`).join('')}</ul></div>
                     </div>
-
-                    <div class="grid md:grid-cols-2 gap-8">
-                        <div>
-                            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                                <i data-lucide="target" class="w-5 h-5 text-cyan-400"></i> Execution
-                            </h3>
-                            <ul class="space-y-4">
-                                ${skill.steps.map((step, idx) => `
-                                    <li class="flex gap-4 items-start">
-                                        <div class="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5 border border-white/10">${idx + 1}</div>
-                                        <p class="text-gray-300 text-sm leading-relaxed">${step}</p>
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                                <i data-lucide="trophy" class="w-5 h-5 text-yellow-400"></i> Unlocks
-                            </h3>
-                            <div class="bg-zinc-800/50 p-4 rounded-lg border border-white/5">
-                                <div class="space-y-2">
-                                    ${skill.unlocks.map(unlock => `
-                                        <div class="flex items-center gap-2 text-white text-sm font-medium">
-                                            <i data-lucide="zap" class="w-3.5 h-3.5 text-yellow-400"></i> ${unlock}
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                             <button class="w-full mt-6 py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold uppercase tracking-widest transition-colors rounded flex items-center justify-center gap-2 group">
-                                <i data-lucide="play" class="w-4 h-4"></i> Tutorial starten
-                            </button>
+                    <div class="p-4 border border-white/10 rounded">
+                        <h4 class="text-xs text-gray-500 uppercase tracking-widest mb-2">Skill Tree</h4>
+                        <div class="flex gap-2 text-xs items-center flex-wrap opacity-70">
+                            ${skill.progression.map(p => `<span>${p}</span> <i data-lucide="arrow-right" class="w-3 h-3"></i>`).join('')}
+                            <span class="text-cyan-400 font-bold border-b border-cyan-400">${skill.title}</span>
+                             <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                             ${skill.unlocks.map(u => `<span class="text-white font-bold">${u}</span>`).join('')}
                         </div>
                     </div>
                 </div>
             `;
-            
             lucide.createIcons();
-            document.body.style.overflow = 'hidden'; // Lock scroll
-            modalOverlay.classList.remove('hidden');
-            modalOverlay.classList.add('flex');
-            
-            // Animation In
-            gsap.to(modalOverlay, { opacity: 1, duration: 0.3 });
-            gsap.to(modalContent, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.2)" });
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.remove('hidden');
+            gsap.to(overlay, { opacity: 1, duration: 0.3 });
+            gsap.to('#modal-content', { opacity: 1, y: 0, duration: 0.4, delay: 0.1, ease: "power2.out" });
         }
-
         function closeModal() {
-            const modalOverlay = document.getElementById('modal-overlay');
-            const modalContent = document.getElementById('modal-content');
-
-            gsap.to(modalContent, { scale: 0.95, opacity: 0, duration: 0.2 });
-            gsap.to(modalOverlay, { opacity: 0, duration: 0.3, onComplete: () => {
-                modalOverlay.classList.add('hidden');
-                modalOverlay.classList.remove('flex');
-                document.body.style.overflow = ''; // Unlock scroll
+             const overlay = document.getElementById('modal-overlay');
+            gsap.to('#modal-content', { y: 20, opacity: 0, duration: 0.2 });
+            gsap.to(overlay, { opacity: 0, duration: 0.3, onComplete: () => overlay.classList.add('hidden') });
+        }
+        function openVideo(id) {
+            const overlay = document.getElementById('video-overlay');
+            document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" frameborder="0" allowfullscreen></iframe>`;
+            overlay.classList.remove('hidden');
+            gsap.to(overlay, { opacity: 1 });
+        }
+        function closeVideo() {
+            const overlay = document.getElementById('video-overlay');
+            gsap.to(overlay, { opacity: 0, onComplete: () => {
+                overlay.classList.add('hidden');
+                document.getElementById('video-container').innerHTML = '';
             }});
         }
-
-        // --- ANIMATIONS ---
-        function runPageAnimations(page) {
-            if(page === 'home') {
-                gsap.to('.hero-text', { opacity: 1, x: 0, duration: 1, ease: "power2.out" });
-                gsap.to('.hero-image', { opacity: 1, scale: 1, duration: 1, delay: 0.2, ease: "power2.out" });
-                
-                // Floating Elements Animation
-                gsap.to('.float-anim-1', { y: -20, duration: 4, repeat: -1, yoyo: true, ease: "sine.inOut" });
-                gsap.to('.float-anim-2', { y: 20, duration: 5, repeat: -1, yoyo: true, ease: "sine.inOut", delay: 1 });
-                
-                // Stagger Featured Skills
-                gsap.from('.stagger-grid > div', { 
-                    opacity: 0, y: 30, duration: 0.8, stagger: 0.2, scrollTrigger: { trigger: '.stagger-grid', start: "top 80%" } 
-                });
-            } 
-            else if (page === 'skills' || page === 'workouts') {
-                gsap.to('.page-header', { opacity: 1, y: 0, duration: 0.8 });
-                gsap.from('.stagger-grid > div, .grid-container > div', { 
-                    opacity: 0, y: 30, duration: 0.6, stagger: 0.1, delay: 0.2 
-                });
-            }
-            else if (page === 'philosophy') {
-                gsap.to('.page-header', { opacity: 1, x: 0, duration: 0.8 });
-                gsap.to('.fade-in-section', { opacity: 1, scale: 1, duration: 0.8, delay: 0.3 });
-            }
-        }
-
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
-            if (menu.classList.contains('hidden')) {
-                menu.classList.remove('hidden');
-                gsap.fromTo(menu, { height: 0, opacity: 0 }, { height: 'auto', opacity: 1, duration: 0.3 });
+            if(menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden', 'pointer-events-none', 'opacity-0');
+                menu.style.display = 'flex';
+                gsap.fromTo(menu, { opacity: 0 }, { opacity: 1 });
             } else {
-                gsap.to(menu, { height: 0, opacity: 0, duration: 0.3, onComplete: () => menu.classList.add('hidden') });
+                gsap.to(menu, { opacity: 0, onComplete: () => menu.classList.add('hidden', 'pointer-events-none') });
             }
         }
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Initial render
+            initBg(); drawBg();
             const main = document.getElementById('app-root');
             main.innerHTML = Components.Hero();
             lucide.createIcons();
-            
-            // Set initial active state
-            document.querySelector('[data-page="home"]').classList.add('text-cyan-400');
-            document.querySelector('[data-page="home"]').classList.remove('text-gray-400');
-
-            runPageAnimations('home');
-
-            // Scroll Parallax Effect for Hero
-            window.addEventListener('scroll', () => {
-                if(router.currentPage !== 'home') return;
-                const scrolled = window.scrollY;
-                const heroText = document.querySelector('.hero-text');
-                const heroImage = document.querySelector('.hero-image');
-                if(heroText) heroText.style.transform = `translateY(${scrolled * 0.4}px)`;
-                if(heroImage) heroImage.style.transform = `translateY(${scrolled * -0.2}px)`;
-            });
+            initInteractions();
+            scrambleTextElements();
+            runEntrance('home');
+            updateNav('home');
         });
 
     </script>
+    
+    <style>
+        @keyframes animate-gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animate-gradient { animation: animate-gradient 3s ease infinite; }
+        .text-shadow-glow { text-shadow: 0 0 20px rgba(34,211,238,0.5); }
+        .float-anim { animation: float 4s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    </style>
 </body>
 </html>
+
 
